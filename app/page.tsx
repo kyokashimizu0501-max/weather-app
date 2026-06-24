@@ -1,65 +1,115 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { GeoResult, WeatherData } from "@/types/weather";
+import SearchBar from "@/components/SearchBar";
+import WeatherCard from "@/components/WeatherCard";
+import WeeklyForecast from "@/components/WeeklyForecast";
+import ForecastDatePicker from "@/components/ForecastDatePicker";
 
 export default function Home() {
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const fetchWeather = async (lat: number, lon: number, displayName?: string) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/weather?action=forecast&lat=${lat}&lon=${lon}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      // ユーザーが選択した地名を優先（APIが返す英語名より正確）
+      if (displayName) data.city = displayName;
+      setWeatherData(data);
+      setSelectedDate(data.days[0]?.date ?? "");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "天気データの取得に失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectLocation = (geo: GeoResult) => {
+    const displayName = geo.local_names?.ja ?? geo.name;
+    fetchWeather(geo.lat, geo.lon, displayName);
+  };
+
+  const handleGeolocation = () => {
+    if (!navigator.geolocation) {
+      setError("このブラウザは位置情報に対応していません");
+      return;
+    }
+    setIsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+      () => {
+        setError("位置情報の取得が拒否されました");
+        setIsLoading(false);
+      }
+    );
+  };
+
+  const selectedDay = weatherData?.days.find((d) => d.date === selectedDate);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-500 to-blue-700 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-6 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-md">
+            天気予報アプリ
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-white/70 text-sm mt-1">OpenWeatherMap</p>
+        </header>
+
+        <div className="flex justify-center mb-6">
+          <SearchBar
+            onSelectLocation={handleSelectLocation}
+            onUseGeolocation={handleGeolocation}
+            isLoading={isLoading}
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent" />
+          </div>
+        )}
+
+        {error && !isLoading && (
+          <div className="bg-red-500/20 border border-red-300/30 text-white rounded-xl p-4 text-center backdrop-blur-sm">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && weatherData && selectedDay && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              <WeatherCard data={weatherData} day={selectedDay} />
+              <WeeklyForecast
+                days={weatherData.days}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <ForecastDatePicker
+                forecastDates={weatherData.days.map((d) => d.date)}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+              />
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !weatherData && !error && (
+          <div className="text-center py-20 text-white/60">
+            <div className="text-7xl mb-4">🌤</div>
+            <p className="text-xl font-light">都市を検索するか、現在地を使ってください</p>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
