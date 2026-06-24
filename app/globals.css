@@ -10,3 +10,57 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans",
     Meiryo, sans-serif;
 }
+
+/* ── Weather Animations ── */
+
+@keyframes rain-drop {
+  from {
+    transform: translateY(0) translateX(0);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(105vh) translateX(-30px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  12% { opacity: 0.9; }
+  50% { transform: translateY(200px) translateX(28px) rotate(180deg); }
+  88% { opacity: 0.9; }
+  100% {
+    transform: translateY(420px) translateX(-18px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sun-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes sun-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.9; }
+  50%       { transform: scale(1.1); opacity: 1;   }
+}
+
+@keyframes cloud-float {
+  from { transform: translateX(-350px); }
+  to   { transform: translateX(120vw); }
+}
+
+@keyframes particle-rise {
+  0%   { transform: translateY(0)      scale(1);   opacity: 0.75; }
+  100% { transform: translateY(-280px) scale(0.1); opacity: 0;    }
+}
+
+@keyframes lightning-flash {
+  0%, 87%, 100% { opacity: 0; }
+  88%, 92%      { opacity: 0.9; }
+  90%           { opacity: 0.15; }
+}
+
