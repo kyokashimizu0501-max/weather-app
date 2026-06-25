@@ -8,6 +8,7 @@ import WeeklyForecast from "@/components/WeeklyForecast";
 import ForecastDatePicker from "@/components/ForecastDatePicker";
 import FavoritesList from "@/components/FavoritesList";
 import WeatherAnimation from "@/components/WeatherAnimation";
+import AdviceCard from "@/components/AdviceCard";
 import { useFavorites, FavoriteCity } from "@/lib/favorites";
 
 export default function Home() {
@@ -128,6 +129,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 flex flex-col gap-4">
               <WeatherCard data={weatherData} day={selectedDay} />
+              <AdviceCard data={weatherData} day={selectedDay} />
               <div className="flex justify-end">
                 <button
                   onClick={handleToggleFavorite}
